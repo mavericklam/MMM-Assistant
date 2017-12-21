@@ -10,6 +10,9 @@ const Speaker = require('speaker')
 const GoogleAssistant = require('google-assistant')
 const Speech = require('@google-cloud/speech')
 const exec = require('child_process').exec
+const apiai = require('apiai');
+const dialogflowApp;
+var sessionID;
 //const tts = require('picotts')
 
 var NodeHelper = require("node_helper")
@@ -37,7 +40,7 @@ module.exports = NodeHelper.create({
         = path.resolve(__dirname, this.config.stt.auth[i].keyFilename)
     }
 
-
+    dialogflowApp = apiai(this.config.apiai.token)
     this.sendSocketNotification('MODE', {mode:"INITIALIZED"})
   },
 
@@ -103,7 +106,22 @@ module.exports = NodeHelper.create({
   test: function(test) {
     this.sendSocketNotification('COMMAND', test)
   },
+  activateDialogFlow: function(inputText){
 
+    var request = dialogflowApp.textRequest(inputText, {
+        sessionId: (sessionID?sessionID:null)
+    });
+
+    request.on('response', function(response) {
+        console.log(response);
+    });
+
+    request.on('error', function(error) {
+        console.log(error);
+    });
+
+    request.end();
+  },
   activateSpeak: function(text, commandOption={}, originalCommand = "") {
     var option = {}
     option.language = (typeof commandOption.language !== 'undefined') ? commandOption.language : this.config.speak.language
